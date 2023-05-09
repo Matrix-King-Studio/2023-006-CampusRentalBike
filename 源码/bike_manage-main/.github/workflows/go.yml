@@ -1,0 +1,84 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.20.2
+
+    - name: Watch
+      run: ls -l
+
+    - name: install
+      run: go install
+
+    - name: Build
+      run: go build -o bike_manage_app
+
+    - name: Test
+      run: go test -v ./...
+
+    - name: Prepare artifacts
+      run: |
+        mkdir artifacts
+        cp ./bike_manage_app ./artifacts/
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: artifacts
+        path: ./artifacts
+  
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    steps:
+#    - name: Checkout repository
+#      uses: actions/checkout@v2
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Download build artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: artifacts
+        path: ./
+
+    - name: Inspect downloaded artifacts
+      run: |
+        ls -l
+
+    - name: Add server to known_hosts
+      run: |
+        HOST="104.208.110.236"
+        ssh-keyscan -H $HOST >> ~/.ssh/known_hosts
+
+    - name: Deploy to server
+      run: |
+        USER="root"
+        HOST="104.208.110.236"
+        TARGET_DIR="/www/bike"
+        CONFIG_DIR="$TARGET_DIR/config"
+
+        ssh $USER@$HOST "mkdir -p $CONFIG_DIR"
+        # 使用 scp 将构建好的程序传输到服务器
+        scp ./bike_manage_app $USER@$HOST:$TARGET_DIR

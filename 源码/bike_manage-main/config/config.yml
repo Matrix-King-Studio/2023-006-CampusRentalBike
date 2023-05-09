@@ -1,0 +1,18 @@
+database:
+  dialect: mysql
+  host: 104.208.110.236
+  port: 3306
+  user: bike_manager
+  password: rDB36KhZY6DLaT2e
+  dbname: bike_manager
+
+jwt:
+  secretKey: "17300335"
+  expires: 24
+
+ginSettings:
+  port: ":8000"
+
+WeChatSetting:
+  appid: wxc8ef5245335f581e
+  appsecret: b477f45acecf66fb1231573f7d410e76
